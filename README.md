@@ -1,3 +1,37 @@
+# Wanderlog build instructions
+
+This is a fork of winston-logstash, a plugin for our Winston logger to write
+outputs to Logstash (part of the Kibana/ELK stack.)
+
+## How to maintain
+
+1.  Make changes and merge them into the `main` branch
+2.  Figure out the number of the previous release by visiting
+    https://github.com/wanderlog/winston-logstash/releases
+    e.g., if the previous release was
+    `v1.2.1-wanderlog.3`, change it to `v1.2.1-wanderlog.4`
+3.  Run:
+    ```shell
+    VERSION='<substitute version here>' # e.g., VERSION='v1.2.1-wanderlog.4'
+    VERSION_WITHOUT_V="${VERSION#v}"
+    git checkout wanderlog-built
+    git fetch
+    git reset --hard origin/main
+    yarn build
+    # Increment the version number to the version of the latest release:
+    # e.g., 1.2.1-wanderlog.4 from the example above
+    # We use perl instead of sed so it's portable on Mac and non-Mac:
+    # see https://stackoverflow.com/a/4247319/309011
+    perl -i -pe's/"version":.*,/"version": "'"$VERSION_WITHOUT_V"'",/' package.json
+    git add package.json lib
+    git commit -m "[$VERSION] Release built version"
+    git push -u origin wanderlog-built -f
+    ```
+4.  Visit https://github.com/wanderlog/winston-logstash/releases
+5.  Create a new release with:
+    - Title: new release (e.g., `v1.2.1-wanderlog.4`)
+    - Branch: `wanderlog-built`
+
 # winston-logstash
 
 [![Build Status](https://github.com/jaakkos/winston-logstash/actions/workflows/build-test.yaml/badge.svg)](https://github.com/jaakkos/winston-logstash/actions/workflows/build-test.yaml)
