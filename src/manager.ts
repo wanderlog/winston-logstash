@@ -20,6 +20,7 @@ export class Manager extends EventEmitter {
   private readonly retryStrategy: RetryStrategy;
   private nextRetryTimeoutForExponentialBackoff = DEFAULT_RETRY_TIMEOUT_MS_FOR_EXPONENTIAL_BACKOFF;
   private retryTimeout?: ReturnType<typeof setTimeout> = undefined;
+  private isClosing = false;
 
   private connectionCallbacks: Map<ConnectionEvents, (e:Error) => void> = new Map<ConnectionEvents, () => void>
 
@@ -95,7 +96,7 @@ export class Manager extends EventEmitter {
   }
 
   private shouldTryToReconnect(error: Error) {
-    if (this.isRetryableError(error)) {
+    if (this.isRetryableError(error) && !this.isClosing) {
       const { maxConnectRetries } = this.retryStrategy;
       return maxConnectRetries < 0 || this.retries < maxConnectRetries;
     } else {
@@ -161,6 +162,11 @@ export class Manager extends EventEmitter {
   }
 
   close() {
+    this.isClosing = true;
+    if (this.retryTimeout) {
+      clearTimeout(this.retryTimeout);
+    }
+
     this.emit('closing');
     this.flush();
     this.removeEventListeners();
